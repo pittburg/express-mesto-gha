@@ -1,20 +1,26 @@
 const User = require('../models/user');
+const { BAD_REQUEST, NOT_FOUND, SOME_ERROR } = require('../errors/errors');
 
-const getUsers = (req, res, next) => {
+const getUsers = (req, res) => {
   User.find({})
     .then((users) => res.status(200).send(users))
-    .catch(next);
+    .catch(() => res.status(SOME_ERROR).send({ message: 'Ошибка сервера' }));
 };
 
-const getUserById = (req, res, next) => {
+const getUserById = (req, res) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        return next(new Error('Пользователь не найден'));
+        res.status(NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
       }
-      return res.status(200).send(user);
+      res.status(200).send(user);
     })
-    .catch(next);
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+      }
+      return res.status(SOME_ERROR).send({ message: 'Ошибка сервера' });
+    });
 };
 
 const createUser = (req, res) => {
@@ -24,9 +30,13 @@ const createUser = (req, res) => {
       name: user.name,
       about: user.about,
       avatar: user.avatar,
-      // _id: user._id,
     }))
-    .catch((err) => res.status(400).send(err));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+      }
+      return res.status(SOME_ERROR).send({ message: 'Ошибка сервера' });
+    });
 };
 
 module.exports = { getUsers, getUserById, createUser };

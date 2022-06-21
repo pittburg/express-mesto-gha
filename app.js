@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const userRouter = require('./routes/users');
+const cardRouter = require('./routes/cards');
 
 const { PORT = 3000 } = process.env;
 
@@ -17,6 +18,15 @@ app.get('/', (_req, res) => {
   res.send({ message: 'привет' });
 });
 
+app.use((req, res, next) => {
+  req.user = {
+    _id: '62a3237966514445fcdf08b8',
+  };
+
+  next();
+});
+
 app.use('/', userRouter);
+app.use('/', cardRouter);
 
 app.listen(PORT);
