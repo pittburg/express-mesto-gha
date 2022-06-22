@@ -39,4 +39,65 @@ const createUser = (req, res) => {
     });
 };
 
-module.exports = { getUsers, getUserById, createUser };
+const updateUserProfile = (req, res) => {
+  const { name, about } = req.body;
+  User.findByIdAndUpdate(
+    req.user._id,
+    { name, about },
+    {
+      new: true,
+      runValidators: true,
+      upsert: true,
+    },
+  )
+    .then((user) => {
+      if (!user) {
+        res.status(NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
+      }
+      res.send({ data: user });
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+      } if (err.name === 'CastError') {
+        return res.status(NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
+      }
+      return res.status(SOME_ERROR).send({ message: 'Ошибка сервера' });
+    });
+};
+
+const updateUserAvatar = (req, res) => {
+  const { avatar } = req.body;
+  User.findByIdAndUpdate(
+    req.user._id,
+    { avatar },
+    {
+      new: true,
+      runValidators: true,
+      upsert: true,
+    },
+  )
+    .then((user) => {
+      if (!user) {
+        res.status(NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
+      }
+      res.send({ data: user });
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+      }
+      if (err.name === 'CastError') {
+        return res.status(NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
+      }
+      return res.status(SOME_ERROR).send({ message: 'Ошибка сервера' });
+    });
+};
+
+module.exports = {
+  getUsers,
+  getUserById,
+  createUser,
+  updateUserProfile,
+  updateUserAvatar,
+};

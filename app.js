@@ -14,10 +14,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 mongoose.connect('mongodb://localhost:27017/mestodb');
 
-app.get('/', (_req, res) => {
-  res.send({ message: 'привет' });
-});
-
 app.use((req, res, next) => {
   req.user = {
     _id: '62a3237966514445fcdf08b8',
