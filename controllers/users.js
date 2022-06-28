@@ -27,6 +27,23 @@ const getUserById = (req, res) => {
     });
 };
 
+const getCurrentUser = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) {
+        throw new NOT_FOUND('Пользователь не найден');
+      }
+      res.status(200).send({ user });
+    })
+    .catch((err) => {
+      if (err.message === 'NotFound') {
+        next(new NOT_FOUND('Пользователь или карточка не найдены'));
+      } else {
+        next(err);
+      }
+    });
+};
+
 const createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
@@ -124,5 +141,5 @@ const login = (req, res) => {
 };
 
 module.exports = {
-  getUsers, getUserById, createUser, updateUserProfile, updateUserAvatar, login,
+  getUsers, getUserById, createUser, updateUserProfile, updateUserAvatar, login, getCurrentUser,
 };
