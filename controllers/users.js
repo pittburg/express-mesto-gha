@@ -1,4 +1,7 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const { NODE_ENV, JWT_SECRET } = process.env;
 const User = require('../models/user');
 const { BAD_REQUEST, NOT_FOUND, SOME_ERROR } = require('../errors/errors');
 
@@ -33,7 +36,11 @@ const createUser = (req, res, next) => {
       name, about, avatar, email, password: hash,
     }))
     .then((user) => res.status(201).send({
-      name: user.name, about: user.about, avatar: user.avatar, email: user.email, _id: user.id,
+      name: user.name,
+      about: user.about,
+      avatar: user.avatar,
+      email: user.email,
+      _id: user.id,
     }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -98,10 +105,25 @@ const updateUserAvatar = (req, res) => {
     });
 };
 
+const login = (req, res) => {
+  const { email, password } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign(
+        { _id: user._id },
+        NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
+        { expiresIn: '7d' },
+      );
+      res.send({ token });
+    })
+
+    .catch((err) => {
+      res
+        .status(401).send({ message: err.message });
+    });
+};
+
 module.exports = {
-  getUsers,
-  getUserById,
-  createUser,
-  updateUserProfile,
-  updateUserAvatar,
+  getUsers, getUserById, createUser, updateUserProfile, updateUserAvatar, login,
 };
