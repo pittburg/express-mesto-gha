@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const { NODE_ENV, JWT_SECRET } = process.env;
+// const { NODE_ENV, JWT_SECRET } = process.env;
 const User = require('../models/user');
 const NotFoundError = require('../errors/NotFoundError');
 const ConflictError = require('../errors/ConflictError');
@@ -134,17 +134,24 @@ const updateUserAvatar = (req, res, next) => {
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
-  return User.findUserByCredentials(email, password)
+  User.findOne({ email }).select('+password')
     .then((user) => {
-      const token = jwt.sign(
-        { _id: user._id },
-        NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
-        { expiresIn: '7d' },
-      );
-      res.send({ token });
+      if (!user) {
+        throw new AuthError('Почта или пароль неверные');
+      }
+      return Promise.all([user, bcrypt.compare(password, user.password)]);
     })
-    .catch(() => {
-      next(new AuthError('Почта или пароль неверные'));
+    .then(([user, valid]) => {
+      if (!valid) {
+        throw new AuthError('Почта или пароль неверные');
+      }
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', {
+        expiresIn: '7d',
+      });
+      return res.send({ token });
+    })
+    .catch((err) => {
+      next(err);
     });
 };
 
